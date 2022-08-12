@@ -7,7 +7,6 @@ const companyRoutes = require('./routes/companies')
 app.use(express.json());
 app.use('/companies', companyRoutes)
 
-
 /** 404 handler */
 
 app.use(function(req, res, next) {

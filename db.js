@@ -15,4 +15,7 @@ let db = new Client({
 
 db.connect();
 
-module.exports = {db: db, DB_URI: DB_URI};
+module.exports = {
+    db: db,
+    DB_URI: DB_URI
+};
