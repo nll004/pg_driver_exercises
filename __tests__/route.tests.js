@@ -2,35 +2,47 @@ process.env.NODE_ENV = "test";
 
 const request = require("supertest");
 const app = require("../app");
-const { db, DB_URI } = require('../db.js')
+const {db, uri} = require('../db')
 
-let tstCompany;
-let tstInvoice;
+let tstCompany = {};
+let tstInvoice = {};
 
 beforeEach(async function(){
-    let res = await db.query(`INSERT INTO companies VALUES ('apple', 'Apple Computer', 'Maker of OSX.'), ('ibm', 'IBM', 'Big blue.')`)
-    tstCompany = res.rows;
+    let resp = await db.query(`
+    INSERT INTO companies
+    VALUES ('apple', 'Apple Computer', 'Maker of OSX.'),
+    ('ibm', 'IBM', 'Big blue.')
+    RETURNING code, name, description`)
+    tstCompany.companies = resp.rows;
 })
+afterEach(async function() {
+    await db.query(`DELETE FROM companies`);
+});
+afterAll(async function() {
+  // close db connection
+  await db.end();
+});
 
-// afterEach(async function() {
-//     // delete any data created by test
-//     await db.query("DELETE FROM companies");
-// });
-
-// afterAll(async function() {
-//   // close db connection
-//   await db.end();
-// });
-
-describe('Check for using test database', function(){
+describe('Check if using correct database with tests', function(){
     test('Test for test database URI', function(){
-        expect(DB_URI).toEqual('postgresql:///biztime_test')
+        expect(uri).toEqual('postgresql:///biztime_test')
     })
 })
-
-// describe('GET /companies', function(){
-//     test('Test for a list of companies', function(){
-
-//         expect()
-//     })
-// })
+describe('GET /companies', function(){
+    test('Test route for a list of all companies', async function(){
+        let response = await request(app).get('/companies');
+        expect(response.statusCode).toEqual(200);
+        expect(response.body).toEqual(tstCompany);
+    })
+})
+describe('GET /companies/:code', function(){
+    test('Test route for a single company', async function(){
+        let response = await request(app).get(`/companies/${tstCompany.companies[0].code}`);
+        expect(response.statusCode).toEqual(200);
+        expect(response.body).toEqual([ tstCompany.companies[0] ])
+    })
+    test('Test route of error handling', async function(){
+        let response = await request(app).get(`/companies/haidahgetia`);
+        expect(response.statusCode).toEqual(404);
+    })
+})

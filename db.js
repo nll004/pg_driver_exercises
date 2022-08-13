@@ -17,5 +17,4 @@ db.connect();
 
 module.exports = {
     db: db,
-    DB_URI: DB_URI
-};
+    uri : DB_URI};
