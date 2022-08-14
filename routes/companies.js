@@ -28,6 +28,7 @@ router.get('/:code', async function(req, resp, next){
 router.post('/', async function(req, resp, next){
     try{
         const company = req.body.company
+        console.log(company)
         const results = await db.query(`
             INSERT INTO companies (code, name, description )
             VALUES ($1, $2, $3)
@@ -45,7 +46,7 @@ router.post('/', async function(req, resp, next){
 router.put('/:code', async function(req, resp, next){
     try{
         const companyCode = req.params.code
-        const newData = req.body
+        const newData = req.body.company
         const company = await db.query(`SELECT * FROM companies WHERE code=$1`, [companyCode]);
         if(company.rows.length === 0){
             throw new ExpressError("Company not found", 404)
