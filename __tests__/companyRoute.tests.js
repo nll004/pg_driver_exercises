@@ -2,26 +2,14 @@ process.env.NODE_ENV = "test";
 
 const request = require("supertest");
 const app = require("../app");
-const {db, uri} = require('../db')
+const {db, uri} = require('../db');
+const {createCompanies} = require('../_testData');
 
 let tstCompany = {};
-let tstInvoice = {};
 
 beforeEach(async function(){
-    let companyData = await db.query(`
-        INSERT INTO companies
-        VALUES  ('apple', 'Apple Computer', 'Maker of OSX.'),
-                ('ibm', 'IBM', 'Big blue.')
-        RETURNING code, name, description`);
-
-    let invoiceData = await db.query(`
-        INSERT INTO invoices (comp_code, amt, paid, add_date, paid_date)
-        VALUES ('apple', 100, false, '2018-01-01', null),
-               ('apple', 200, true, '2018-02-01', '2018-02-02'),
-               ('ibm', 300, false, '2018-03-01', null)
-        RETURNING id, amt, comp_code`);
-    tstCompany.companies = companyData.rows;
-    tstInvoice.invoices = invoiceData.rows;
+    let results = await createCompanies();
+    tstCompany.companies = results.rows;
 })
 afterEach(async function() {
     await db.query(`DELETE FROM companies`);
@@ -72,12 +60,6 @@ describe("POST /companies", function(){
                 "description": "American Superstore",
         }});
     })
-    test("It should return 500 if conflict", async function () {
-        const response = await request(app)
-            .post("/companies")
-            .send({company:{name: "Apple", description: "Huh?"}});
-        expect(response.status).toEqual(500);
-      })
 });
 describe("PUT /companies/:code", function() {
     test("It should update a specific company", async function() {
